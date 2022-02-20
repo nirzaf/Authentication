@@ -15,15 +15,15 @@ namespace Server.Controllers
     {
         [HttpGet]
         public IActionResult Authorize(
-            string response_type, // authorization flow type 
-            string client_id, // client id
-            string redirect_uri,
+            string responseType, // authorization flow type 
+            string clientId, // client id
+            string redirectUri,
             string scope, // what info I want = email,grandma,tel
             string state) // random string generated to confirm that we are going to back to the same client
         {
             // ?a=foo&b=bar
             var query = new QueryBuilder();
-            query.Add("redirectUri", redirect_uri);
+            query.Add("redirectUri", redirectUri);
             query.Add("state", state);
 
             return View(model: query.ToString());
@@ -43,11 +43,11 @@ namespace Server.Controllers
         }
 
         public async Task<IActionResult> Token(
-            string grant_type, // flow of access_token request
+            string grantType, // flow of access_token request
             string code, // confirmation of the authentication process
-            string redirect_uri,
-            string client_id,
-            string refresh_token)
+            string redirectUri,
+            string clientId,
+            string refreshToken)
         {
             // some mechanism for validating the code
 
@@ -59,7 +59,7 @@ namespace Server.Controllers
 
             var secretBytes = Encoding.UTF8.GetBytes(Constants.Secret);
             var key = new SymmetricSecurityKey(secretBytes);
-            var algorithm = SecurityAlgorithms.HmacSha256;
+            const string algorithm = SecurityAlgorithms.HmacSha256;
 
             var signingCredentials = new SigningCredentials(key, algorithm);
 
@@ -68,16 +68,16 @@ namespace Server.Controllers
                 Constants.Audiance,
                 claims,
                 DateTime.Now,
-                grant_type == "refresh_token"
+                grantType == "refresh_token"
                     ? DateTime.Now.AddMinutes(5)
                     : DateTime.Now.AddMilliseconds(1),
                 signingCredentials);
 
-            var access_token = new JwtSecurityTokenHandler().WriteToken(token);
+            var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
 
             var responseObject = new
             {
-                access_token,
+                access_token = accessToken,
                 token_type = "Bearer",
                 raw_claim = "oauthTutorial",
                 refresh_token = "RefreshTokenSampleValueSomething77"
@@ -88,7 +88,7 @@ namespace Server.Controllers
 
             await Response.Body.WriteAsync(responseBytes, 0, responseBytes.Length);
 
-            return Redirect(redirect_uri);
+            return Redirect(redirectUri);
         }
 
         [Authorize]
